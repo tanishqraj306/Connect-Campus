@@ -99,3 +99,12 @@ export const logout = (req, res) => {
   res.clearCookie("jwt-connect-campus");
   res.json({ message: "Logged out successfully" });
 };
+
+export const getCurrentUser = async (req, res) => {
+  try {
+    res.json(req.user);
+  } catch (error) {
+    console.log(`Error in getCurrentUser: ${error.message}`);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
