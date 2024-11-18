@@ -7,12 +7,19 @@ import notificationRoutes from "./routes/notification.route.js";
 import connectionRoutes from "./routes/connection.route.js";
 import { connectDB } from "./lib/db.js";
 import cookieParser from "cookie-parser";
-
+import cors from "cors";
 dotenv.config();
 
 const app = express();
 
 const PORT = process.env.PORT;
+
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL,
+    credentials: true,
+  }),
+);
 
 app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
