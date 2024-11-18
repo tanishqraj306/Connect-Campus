@@ -15,7 +15,7 @@ function App() {
         const res = await axiosInstance.get("/auth/me");
         return res.data;
       } catch (error) {
-        if (error.response && error.response.status === 401) {
+        if (error.response?.status === 401) {
           return null;
         }
         toast.error(error.response.data.message || "Something went wrong");
