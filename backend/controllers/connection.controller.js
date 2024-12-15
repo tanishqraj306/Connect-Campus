@@ -1,4 +1,7 @@
+import { sendConnectionAcceptedEmail } from "../emails/emailHandlers.js";
 import ConnectionRequest from "../models/connectionRequest.model.js";
+import Notification from "../models/notification.model.js";
+import User from "../models/user.models.js";
 
 export const sendConnectionRequest = async (req, res) => {
   try {
@@ -33,6 +36,7 @@ export const sendConnectionRequest = async (req, res) => {
     });
 
     await newRequest.save();
+    res.status(201).json({ message: "Connection request sent successfully" });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
@@ -47,7 +51,11 @@ export const acceptConnectionRequest = async (req, res) => {
       .populate("sender", "name email username")
       .populate("recipient", "name username");
 
-    if (!request.recipient._id.toString() !== userId.toString()) {
+    if (!request) {
+      return res.status(404).json({ message: "Connection request not found" });
+    }
+
+    if (request.recipient._id.toString() !== userId.toString()) {
       return res
         .status(403)
         .json({ message: "You are not authorized to accept this request" });
@@ -202,7 +210,7 @@ export const getConnectionStatus = async (req, res) => {
       }
     }
 
-    res.json({ status: "notConnected" });
+    res.json({ status: "not_connected" });
   } catch (error) {
     console.log(`Error in getConnectionStatus: ${error.message}`);
     res.status(500).json({ message: "Internal server error" });

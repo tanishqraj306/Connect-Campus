@@ -6,7 +6,7 @@ export const getUserNotifications = async (req, res) => {
       recipient: req.user._id,
     })
       .sort({ createdAt: -1 })
-      .populate("realtedUser", "name username profilePicture")
+      .populate("relatedUser", "name username profilePicture")
       .populate("relatedPost", "content image");
 
     res.status(200).json(notifications);

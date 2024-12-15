@@ -4,12 +4,14 @@ import Notification from "../models/notification.model.js";
 
 export const getFeedPosts = async (req, res) => {
   try {
-    const posts = await Post.find({ author: { $in: req.user.connections } })
+    const posts = await Post.find({
+      author: { $in: [...req.user.connections, req.user._id] },
+    })
       .populate("author", "name username profilePicture headline")
       .populate("comments.user", "name profilePicture")
       .sort({ createdAt: -1 });
 
-    res.status(200).json({ posts });
+    res.status(200).json(posts);
   } catch (error) {
     console.log(`Error in getFeedPosts: ${error.message}`);
     res.status(500).json({ message: "Internal server error" });
@@ -104,7 +106,7 @@ export const createComment = async (req, res) => {
       { new: true },
     ).populate("author", "name email username headline profilePicture");
 
-    if (post.author.toString() !== req.user._id.toString()) {
+    if (post.author._id.toString() !== req.user._id.toString()) {
       const newNotification = new Notification({
         recipient: post.author,
         type: "comment",
@@ -126,8 +128,6 @@ export const createComment = async (req, res) => {
       } catch (error) {
         console.log(`Error in createComment: ${error.message}`);
       }
-
-      //todo: send email
     }
 
     res.status(200).json(post);
@@ -162,6 +162,7 @@ export const likePost = async (req, res) => {
     }
 
     await post.save();
+    res.status(200).json(post);
   } catch (error) {
     console.log(`Error in likePost: ${error.message}`);
     res.status(500).json({ message: "Internal server error" });
