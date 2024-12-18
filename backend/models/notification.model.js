@@ -25,10 +25,9 @@ const notificationSchema = new mongoose.Schema(
       default: false,
     },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true },
 );
 
 const Notification = mongoose.model("Notification", notificationSchema);
+
 export default Notification;

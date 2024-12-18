@@ -1,9 +1,9 @@
+import { mailtrapClient, sender } from "../lib/mailtrap.js";
 import {
   createCommentNotificationEmailTemplate,
   createConnectionAcceptedEmailTemplate,
   createWelcomeEmailTemplate,
 } from "./emailTemplates.js";
-import { mailtrapClient, sender } from "./../lib/mailtrap.js";
 
 export const sendWelcomeEmail = async (email, name, profileUrl) => {
   const recipient = [{ email }];
@@ -12,12 +12,12 @@ export const sendWelcomeEmail = async (email, name, profileUrl) => {
     const response = await mailtrapClient.send({
       from: sender,
       to: recipient,
-      subject: "Welcome to Connect Campus",
+      subject: "Welcome to UnLinked",
       html: createWelcomeEmailTemplate(name, profileUrl),
       category: "welcome",
     });
 
-    console.log("Welcome email sent successfully", response);
+    console.log("Welcome Email sent succesffully", response);
   } catch (error) {
     throw error;
   }
@@ -36,7 +36,7 @@ export const sendCommentNotificationEmail = async (
     const response = await mailtrapClient.send({
       from: sender,
       to: recipient,
-      subject: "New comment on your post",
+      subject: "New Comment on Your Post",
       html: createCommentNotificationEmailTemplate(
         recipientName,
         commenterName,
@@ -45,8 +45,7 @@ export const sendCommentNotificationEmail = async (
       ),
       category: "comment_notification",
     });
-
-    console.log("Comment notification email sent successfully", response);
+    console.log("Comment Notification Email sent successfully", response);
   } catch (error) {
     throw error;
   }
@@ -61,10 +60,10 @@ export const sendConnectionAcceptedEmail = async (
   const recipient = [{ email: senderEmail }];
 
   try {
-    const sesponse = await mailtrapClient.send({
+    const response = await mailtrapClient.send({
       from: sender,
       to: recipient,
-      subject: `${recipientName} has accepted your connection request`,
+      subject: `${recipientName} accepted your connection request`,
       html: createConnectionAcceptedEmailTemplate(
         senderName,
         recipientName,

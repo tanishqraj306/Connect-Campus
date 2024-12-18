@@ -6,19 +6,9 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    username: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    email: {
-      type: String,
-      required: true,
-    },
-    password: {
-      type: String,
-      required: true,
-    },
+    username: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
     profilePicture: {
       type: String,
       default: "",
@@ -29,7 +19,7 @@ const userSchema = new mongoose.Schema(
     },
     headline: {
       type: String,
-      default: "Linkedin User",
+      default: "Connect Campus User",
     },
     location: {
       type: String,

@@ -1,11 +1,11 @@
 import express from "express";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import {
-  createComment,
   createPost,
-  deletePost,
   getFeedPosts,
+  deletePost,
   getPostById,
+  createComment,
   likePost,
 } from "../controllers/post.controller.js";
 

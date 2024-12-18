@@ -1,8 +1,8 @@
 import express from "express";
 import {
   login,
-  signup,
   logout,
+  signup,
   getCurrentUser,
 } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";

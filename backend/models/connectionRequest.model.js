@@ -25,4 +25,5 @@ const ConnectionRequest = mongoose.model(
   "ConnectionRequest",
   connectionRequestSchema,
 );
+
 export default ConnectionRequest;

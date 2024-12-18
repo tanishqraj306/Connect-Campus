@@ -1,6 +1,6 @@
+import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import User from "../models/user.models.js";
 import { sendWelcomeEmail } from "../emails/emailHandlers.js";
 
 export const signup = async (req, res) => {
@@ -10,7 +10,6 @@ export const signup = async (req, res) => {
     if (!name || !username || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
-
     const existingEmail = await User.findOne({ email });
     if (existingEmail) {
       return res.status(400).json({ message: "Email already exists" });
@@ -24,7 +23,7 @@ export const signup = async (req, res) => {
     if (password.length < 6) {
       return res
         .status(400)
-        .json({ message: "Password must be at least 6 characters long" });
+        .json({ message: "Password must be at least 6 characters" });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -32,22 +31,22 @@ export const signup = async (req, res) => {
 
     const user = new User({
       name,
-      username,
       email,
       password: hashedPassword,
+      username,
     });
 
     await user.save();
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: "3d",
     });
 
     res.cookie("jwt-connect-campus", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      httpOnly: true, // prevent XSS attack
       maxAge: 3 * 24 * 60 * 60 * 1000,
+      sameSite: "strict", // prevent CSRF attacks,
+      secure: process.env.NODE_ENV === "production", // prevents man-in-the-middle attacks
     });
 
     res.status(201).json({ message: "User registered successfully" });
@@ -56,11 +55,11 @@ export const signup = async (req, res) => {
 
     try {
       await sendWelcomeEmail(user.email, user.name, profileUrl);
-    } catch (error) {
-      console.log(`Error sending welcome email: ${error.message}`);
+    } catch (emailError) {
+      console.error("Error sending welcome Email", emailError);
     }
   } catch (error) {
-    console.log(`Error in signup: ${error.message}`);
+    console.log("Error in signup: ", error.message);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -69,30 +68,33 @@ export const login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
+    // Check if user exists
     const user = await User.findOne({ username });
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
+    // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {
+    // Create and send token
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: "3d",
     });
     await res.cookie("jwt-connect-campus", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
       maxAge: 3 * 24 * 60 * 60 * 1000,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
     });
 
     res.json({ message: "Logged in successfully" });
   } catch (error) {
-    console.log(`Error in login: ${error.message}`);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error in login controller:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -105,7 +107,7 @@ export const getCurrentUser = async (req, res) => {
   try {
     res.json(req.user);
   } catch (error) {
-    console.log(`Error in getCurrentUser: ${error.message}`);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error in getCurrentUser controller:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };

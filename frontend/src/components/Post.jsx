@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { axiosInstance } from "../lib/axios";
 import toast from "react-hot-toast";
-import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   Loader,
@@ -11,11 +11,13 @@ import {
   ThumbsUp,
   Trash2,
 } from "lucide-react";
-import PostAction from "./PostAction";
 import { formatDistanceToNow } from "date-fns";
+import PostAction from "./PostAction";
 
 const Post = ({ post }) => {
   const { postId } = useParams();
+
+  const shareUrl = "http://localhost:5173" + "/post/" + post._id;
   const { data: authUser } = useQuery({ queryKey: ["authUser"] });
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
@@ -34,7 +36,7 @@ const Post = ({ post }) => {
       toast.success("Post deleted successfully");
     },
     onError: (error) => {
-      toast.error(error.response.data.message || "Failed to delete post");
+      toast.error(error.message);
     },
   });
 
@@ -48,8 +50,8 @@ const Post = ({ post }) => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       toast.success("Comment added successfully");
     },
-    onError: (error) => {
-      toast.error(error.response.data.message || "Failed to add comment");
+    onError: (err) => {
+      toast.error(err.response.data.message || "Failed to add comment");
     },
   });
 
@@ -59,7 +61,7 @@ const Post = ({ post }) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
-      queryClient.invalidateQueries({ queryKey: ["posts", postId] });
+      queryClient.invalidateQueries({ queryKey: ["post", postId] });
     },
   });
 
@@ -93,6 +95,15 @@ const Post = ({ post }) => {
     }
   };
 
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Link copied to clipboard!");
+    } catch (error) {
+      console.error("Failed to copy link: ", error);
+    }
+  };
+
   return (
     <div className="bg-secondary rounded-lg shadow mb-4">
       <div className="p-4">
@@ -107,7 +118,7 @@ const Post = ({ post }) => {
             </Link>
 
             <div>
-              <Link>
+              <Link to={`/profile/${post?.author?.username}`}>
                 <h3 className="font-semibold">{post.author.name}</h3>
               </Link>
               <p className="text-xs text-info">{post.author.headline}</p>
@@ -145,7 +156,7 @@ const Post = ({ post }) => {
             icon={
               <ThumbsUp
                 size={18}
-                className={isLiked ? "text-blue-500 fill-blue-300" : ""}
+                className={isLiked ? "text-blue-500  fill-blue-300" : ""}
               />
             }
             text={`Like (${post.likes.length})`}
@@ -157,8 +168,11 @@ const Post = ({ post }) => {
             text={`Comment (${comments.length})`}
             onClick={() => setShowComments(!showComments)}
           />
-
-          <PostAction icon={<Share2 size={18} />} text="Share" />
+          <PostAction
+            icon={<Share2 size={18} />}
+            text="Share"
+            onClick={copyToClipboard}
+          />
         </div>
       </div>
 
@@ -181,9 +195,7 @@ const Post = ({ post }) => {
                       {comment.user.name}
                     </span>
                     <span className="text-xs text-info">
-                      {formatDistanceToNow(new Date(comment.createdAt), {
-                        addSuffix: true,
-                      })}
+                      {formatDistanceToNow(new Date(comment.createdAt))}
                     </span>
                   </div>
                   <p>{comment.content}</p>
@@ -198,14 +210,13 @@ const Post = ({ post }) => {
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Add a comment..."
-              className="flex-grow p-2 rounded-l-ful bg-base-100 focus:outline-none focus:ring-0 focus:ring-primary"
+              className="flex-grow p-2 rounded-l-full bg-base-100 focus:outline-none focus:ring-2 focus:ring-primary"
             />
 
             <button
               type="submit"
               className="bg-primary text-white p-2 rounded-r-full hover:bg-primary-dark transition duration-300"
               disabled={isAddingComment}
-              style={{ height: 40 }}
             >
               {isAddingComment ? (
                 <Loader size={18} className="animate-spin" />
@@ -219,5 +230,4 @@ const Post = ({ post }) => {
     </div>
   );
 };
-
 export default Post;

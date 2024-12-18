@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "../lib/axios";
-import toast from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import {
   ExternalLink,
   Eye,
@@ -13,7 +13,7 @@ import { Link } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { formatDistanceToNow } from "date-fns";
 
-const NotificatonsPage = () => {
+const NotificationsPage = () => {
   const { data: authUser } = useQuery({ queryKey: ["authUser"] });
 
   const queryClient = useQueryClient();
@@ -23,18 +23,18 @@ const NotificatonsPage = () => {
     queryFn: () => axiosInstance.get("/notifications"),
   });
 
-  const { mutate: markAsRead } = useMutation({
+  const { mutate: markAsReadMutation } = useMutation({
     mutationFn: (id) => axiosInstance.put(`/notifications/${id}/read`),
     onSuccess: () => {
       queryClient.invalidateQueries(["notifications"]);
     },
   });
 
-  const { mutate: deleteNotification } = useMutation({
+  const { mutate: deleteNotificationMutation } = useMutation({
     mutationFn: (id) => axiosInstance.delete(`/notifications/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries(["notifications"]);
-      toast.success("Notification Deleted");
+      toast.success("Notification deleted");
     },
   });
 
@@ -42,6 +42,7 @@ const NotificatonsPage = () => {
     switch (type) {
       case "like":
         return <ThumbsUp className="text-blue-500" />;
+
       case "comment":
         return <MessageSquare className="text-green-500" />;
       case "connectionAccepted":
@@ -78,7 +79,7 @@ const NotificatonsPage = () => {
               to={`/profile/${notification.relatedUser.username}`}
               className="font-bold"
             >
-              {notification.relatedUser.username}
+              {notification.relatedUser.name}
             </Link>{" "}
             accepted your connection request
           </span>
@@ -115,7 +116,7 @@ const NotificatonsPage = () => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <div className="col-span-1 lg:col-span-1">
+      <div className="col-span-1 lg:col-span-1 hidden lg:block">
         <Sidebar user={authUser} />
       </div>
       <div className="col-span-1 lg:col-span-3">
@@ -172,7 +173,7 @@ const NotificatonsPage = () => {
                     <div className="flex gap-2">
                       {!notification.read && (
                         <button
-                          onClick={() => markAsRead(notification._id)}
+                          onClick={() => markAsReadMutation(notification._id)}
                           className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors"
                           aria-label="Mark as read"
                         >
@@ -181,7 +182,9 @@ const NotificatonsPage = () => {
                       )}
 
                       <button
-                        onClick={() => deleteNotification(notification._id)}
+                        onClick={() =>
+                          deleteNotificationMutation(notification._id)
+                        }
                         className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition-colors"
                         aria-label="Delete notification"
                       >
@@ -200,5 +203,4 @@ const NotificatonsPage = () => {
     </div>
   );
 };
-
-export default NotificatonsPage;
+export default NotificationsPage;

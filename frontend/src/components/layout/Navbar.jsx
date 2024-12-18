@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Home, LogOut, User, Users } from "lucide-react";
+import { axiosInstance } from "../../lib/axios";
 import { Link } from "react-router-dom";
-import { axiosInstance } from "../../lib/axios.js";
+import { Bell, Home, LogOut, User, Users } from "lucide-react";
 
 const Navbar = () => {
   const { data: authUser } = useQuery({ queryKey: ["authUser"] });
@@ -29,7 +29,7 @@ const Navbar = () => {
   const unreadNotificationCount = notifications?.data.filter(
     (notif) => !notif.read,
   ).length;
-  const unreadConnectionRequestCount = connectionRequests?.data?.length;
+  const unreadConnectionRequestsCount = connectionRequests?.data?.length;
 
   return (
     <nav className="bg-secondary shadow-md sticky top-0 z-10">
@@ -39,7 +39,7 @@ const Navbar = () => {
             <Link to="/">
               <img
                 className="h-8 rounded"
-                src="/output-onlinepngtools.png"
+                src="/logo.png"
                 alt="Connect Campus"
               />
             </Link>
@@ -60,9 +60,12 @@ const Navbar = () => {
                 >
                   <Users size={20} />
                   <span className="text-xs hidden md:block">My Network</span>
-                  {unreadConnectionRequestCount > 0 && (
-                    <span className="absolute -top-1 -right-1 md:right-4 bg-blue-500 text-white text-xs rounded-full size-3 md:size-4 flex items-center justify-center">
-                      {unreadConnectionRequestCount}
+                  {unreadConnectionRequestsCount > 0 && (
+                    <span
+                      className="absolute -top-1 -right-1 md:right-4 bg-blue-500 text-white text-xs 
+										rounded-full size-3 md:size-4 flex items-center justify-center"
+                    >
+                      {unreadConnectionRequestsCount}
                     </span>
                   )}
                 </Link>
@@ -73,7 +76,10 @@ const Navbar = () => {
                   <Bell size={20} />
                   <span className="text-xs hidden md:block">Notifications</span>
                   {unreadNotificationCount > 0 && (
-                    <span className="absolute -top-1 -right-1 md:right-4 bg-blue-500 text-white text-xs rounded-full size-3 md:size-4 flex items-center justify-center">
+                    <span
+                      className="absolute -top-1 -right-1 md:right-4 bg-blue-500 text-white text-xs 
+										rounded-full size-3 md:size-4 flex items-center justify-center"
+                    >
                       {unreadNotificationCount}
                     </span>
                   )}
@@ -86,7 +92,7 @@ const Navbar = () => {
                   <span className="text-xs hidden md:block">Me</span>
                 </Link>
                 <button
-                  className="flex items-center space-x-1 text-sm text-grey-600 hover:text-grey-800"
+                  className="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-800"
                   onClick={() => logout()}
                 >
                   <LogOut size={20} />
@@ -99,7 +105,7 @@ const Navbar = () => {
                   Sign In
                 </Link>
                 <Link to="/signup" className="btn btn-primary">
-                  Join Now
+                  Join now
                 </Link>
               </>
             )}
@@ -109,5 +115,4 @@ const Navbar = () => {
     </nav>
   );
 };
-
 export default Navbar;

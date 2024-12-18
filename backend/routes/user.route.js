@@ -1,10 +1,10 @@
 import express from "express";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import {
-  getPublicProfile,
   getSuggestedConnections,
+  getPublicProfile,
   updateProfile,
-} from "../controllers/user.controllers.js";
+} from "../controllers/user.controller.js";
 
 const router = express.Router();
 

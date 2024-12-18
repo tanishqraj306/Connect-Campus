@@ -1,7 +1,7 @@
 import { sendConnectionAcceptedEmail } from "../emails/emailHandlers.js";
 import ConnectionRequest from "../models/connectionRequest.model.js";
 import Notification from "../models/notification.model.js";
-import User from "../models/user.models.js";
+import User from "../models/user.model.js";
 
 export const sendConnectionRequest = async (req, res) => {
   try {
@@ -11,7 +11,7 @@ export const sendConnectionRequest = async (req, res) => {
     if (senderId.toString() === userId) {
       return res
         .status(400)
-        .json({ message: "You cannot send connection request to yourself" });
+        .json({ message: "You can't send a request to yourself" });
     }
 
     if (req.user.connections.includes(userId)) {
@@ -27,7 +27,7 @@ export const sendConnectionRequest = async (req, res) => {
     if (existingRequest) {
       return res
         .status(400)
-        .json({ message: "A connection request already sent" });
+        .json({ message: "A connection request already exists" });
     }
 
     const newRequest = new ConnectionRequest({
@@ -36,9 +36,10 @@ export const sendConnectionRequest = async (req, res) => {
     });
 
     await newRequest.save();
+
     res.status(201).json({ message: "Connection request sent successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -55,21 +56,23 @@ export const acceptConnectionRequest = async (req, res) => {
       return res.status(404).json({ message: "Connection request not found" });
     }
 
+    // check if the req is for the current user
     if (request.recipient._id.toString() !== userId.toString()) {
       return res
         .status(403)
-        .json({ message: "You are not authorized to accept this request" });
+        .json({ message: "Not authorized to accept this request" });
     }
 
     if (request.status !== "pending") {
       return res
         .status(400)
-        .json({ message: "This request has already been accepted" });
+        .json({ message: "This request has already been processed" });
     }
 
     request.status = "accepted";
     await request.save();
 
+    // if im your friend then ur also my friend ;)
     await User.findByIdAndUpdate(request.sender._id, {
       $addToSet: { connections: userId },
     });
@@ -85,13 +88,13 @@ export const acceptConnectionRequest = async (req, res) => {
 
     await notification.save();
 
-    res.status(200).json({ message: "Connection request accepted" });
+    res.json({ message: "Connection accepted successfully" });
 
     const senderEmail = request.sender.email;
     const senderName = request.sender.name;
     const recipientName = request.recipient.name;
     const profileUrl =
-      process.env.FRONTEND_URL + "/profile/" + request.sender.username;
+      process.env.CLIENT_URL + "/profile/" + request.recipient.username;
 
     try {
       await sendConnectionAcceptedEmail(
@@ -101,11 +104,11 @@ export const acceptConnectionRequest = async (req, res) => {
         profileUrl,
       );
     } catch (error) {
-      console.log(`Error in sendConnectionAcceptedEmail: ${error.message}`);
+      console.error("Error in sendConnectionAcceptedEmail:", error);
     }
   } catch (error) {
-    console.log(`Error in acceptConnectionRequest: ${error.message}`);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error in acceptConnectionRequest controller:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -119,7 +122,7 @@ export const rejectConnectionRequest = async (req, res) => {
     if (request.recipient.toString() !== userId.toString()) {
       return res
         .status(403)
-        .json({ message: "You are not authorized to reject this request" });
+        .json({ message: "Not authorized to reject this request" });
     }
 
     if (request.status !== "pending") {
@@ -133,8 +136,8 @@ export const rejectConnectionRequest = async (req, res) => {
 
     res.json({ message: "Connection request rejected" });
   } catch (error) {
-    console.log(`Error in rejectConnectionRequest: ${error.message}`);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error in rejectConnectionRequest controller:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -149,8 +152,8 @@ export const getConnectionRequests = async (req, res) => {
 
     res.json(requests);
   } catch (error) {
-    console.log(`Error in getConnectionRequests: ${error.message}`);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error in getConnectionRequests controller:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -165,7 +168,8 @@ export const getUserConnections = async (req, res) => {
 
     res.json(user.connections);
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error in getUserConnections controller:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -179,8 +183,8 @@ export const removeConnection = async (req, res) => {
 
     res.json({ message: "Connection removed successfully" });
   } catch (error) {
-    console.log(`Error in removeConnection: ${error.message}`);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error in removeConnection controller:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -210,9 +214,10 @@ export const getConnectionStatus = async (req, res) => {
       }
     }
 
+    // if no connection or pending req found
     res.json({ status: "not_connected" });
   } catch (error) {
-    console.log(`Error in getConnectionStatus: ${error.message}`);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error in getConnectionStatus controller:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };

@@ -4,6 +4,7 @@ import Sidebar from "../components/Sidebar";
 import { UserPlus } from "lucide-react";
 import FriendRequest from "../components/FriendRequest";
 import UserCard from "../components/UserCard";
+import RecommendedUser from "../components/RecommendedUser";
 
 const NetworkPage = () => {
   const { data: user } = useQuery({ queryKey: ["authUser"] });
@@ -13,6 +14,14 @@ const NetworkPage = () => {
     queryFn: () => axiosInstance.get("/connections/requests"),
   });
 
+  const { data: recommendedUsers } = useQuery({
+    queryKey: ["recommendedUsers"],
+    queryFn: async () => {
+      const res = await axiosInstance.get("/users/suggestions");
+      return res.data;
+    },
+  });
+
   const { data: connections } = useQuery({
     queryKey: ["connections"],
     queryFn: () => axiosInstance.get("/connections"),
@@ -20,7 +29,7 @@ const NetworkPage = () => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <div className="col-span-1 lg:col-span-1">
+      <div className="col-span-1 lg:col-span-1 hidden lg:block">
         <Sidebar user={user} />
       </div>
       <div className="col-span-1 lg:col-span-3">
@@ -32,7 +41,7 @@ const NetworkPage = () => {
               <h2 className="text-xl font-semibold mb-2">Connection Request</h2>
               <div className="space-y-4">
                 {connectionRequests.data.map((request) => (
-                  <FriendRequest key={request.id} connectionRequest={request} />
+                  <FriendRequest key={request.id} request={request} />
                 ))}
               </div>
             </div>
@@ -51,7 +60,6 @@ const NetworkPage = () => {
               </p>
             </div>
           )}
-
           {connections?.data?.length > 0 && (
             <div className="mb-8">
               <h2 className="text-xl font-semibold mb-4">My Connections</h2>
@@ -66,10 +74,20 @@ const NetworkPage = () => {
               </div>
             </div>
           )}
+
+          {recommendedUsers?.length > 0 && (
+            <div className="col-span-1 lg:col-span-1 lg:block">
+              <div className="bg-secondary rounded-lg shadow p-4">
+                <h2 className="font-semibold mb-4">People you may know</h2>
+                {recommendedUsers?.map((user) => (
+                  <RecommendedUser key={user._id} user={user} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
-
 export default NetworkPage;
