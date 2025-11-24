@@ -35,5 +35,8 @@
     "collectCoverageFrom": [
       "backend/controllers/**/*.js"
     ]
+  },
+  "overrides": {
+    "jwa": "^2.0.0"
   }
 }

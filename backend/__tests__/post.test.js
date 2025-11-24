@@ -20,13 +20,13 @@ await jest.unstable_mockModule("../emails/emailHandlers.js", () => ({
 }));
 
 // Mock Notification Model
-await jest.unstable_mockModule("../models/notification.model.js", () => ({
-  default: {
-    mockImplementation: () => ({
-      save: jest.fn().mockResolvedValue(true),
-    }),
-  },
-}));
+await jest.unstable_mockModule("../models/notification.model.js", () => {
+  const mockNotification = jest.fn().mockImplementation((data) => ({
+    ...data,
+    save: jest.fn().mockResolvedValue(true),
+  }));
+  return { default: mockNotification };
+});
 
 // Mock Post Model (Complex Chaining Support)
 const mockQuery = {
@@ -35,19 +35,20 @@ const mockQuery = {
   then: jest.fn((resolve) => resolve(["mock_post"])),
 };
 
-await jest.unstable_mockModule("../models/post.model.js", () => ({
-  default: {
-    find: jest.fn(() => mockQuery),
-    findById: jest.fn(),
-    findByIdAndUpdate: jest.fn(),
-    findByIdAndDelete: jest.fn(),
-    // Mock Constructor (new Post(...))
-    mockImplementation: (data) => ({
-      ...data,
-      save: jest.fn().mockResolvedValue(true),
-    }),
-  },
-}));
+await jest.unstable_mockModule("../models/post.model.js", () => {
+  const mockPost = jest.fn().mockImplementation((data) => ({
+    ...data,
+    save: jest.fn().mockResolvedValue(true),
+  }));
+
+  // Attach static methods
+  mockPost.find = jest.fn(() => mockQuery);
+  mockPost.findById = jest.fn();
+  mockPost.findByIdAndUpdate = jest.fn();
+  mockPost.findByIdAndDelete = jest.fn();
+
+  return { default: mockPost };
+});
 
 // ==========================================
 // 2. DYNAMIC IMPORTS

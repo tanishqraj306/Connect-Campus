@@ -10,33 +10,27 @@ await jest.unstable_mockModule("../emails/emailHandlers.js", () => ({
 }));
 
 // Mock Notification Model
-await jest.unstable_mockModule("../models/notification.model.js", () => ({
-  default: {
-    // Mock constructor behavior
-    mockImplementation: () => ({
-      save: jest.fn().mockResolvedValue(true),
-    }),
-  },
-}));
+await jest.unstable_mockModule("../models/notification.model.js", () => {
+  const mockNotification = jest.fn().mockImplementation((data) => ({
+    ...data,
+    save: jest.fn().mockResolvedValue(true),
+  }));
+  return { default: mockNotification };
+});
 
 // Mock ConnectionRequest Model
-// We need to handle chaining: findById().populate().populate()
-const mockRequestQuery = {
-  populate: jest.fn().mockReturnThis(), // Returns self for chaining
-  then: jest.fn(), // To act like a Promise
-};
+await jest.unstable_mockModule("../models/connectionRequest.model.js", () => {
+  const mockConnectionRequest = jest.fn().mockImplementation((data) => ({
+    ...data,
+    save: jest.fn().mockResolvedValue(true),
+  }));
 
-await jest.unstable_mockModule("../models/connectionRequest.model.js", () => ({
-  default: {
-    findOne: jest.fn(),
-    findById: jest.fn(),
-    find: jest.fn(), // for getConnectionRequests
-    // Mock constructor behavior
-    mockImplementation: () => ({
-      save: jest.fn().mockResolvedValue(true),
-    }),
-  },
-}));
+  mockConnectionRequest.findOne = jest.fn();
+  mockConnectionRequest.findById = jest.fn();
+  mockConnectionRequest.find = jest.fn();
+
+  return { default: mockConnectionRequest };
+});
 
 // Mock User Model
 await jest.unstable_mockModule("../models/user.model.js", () => ({

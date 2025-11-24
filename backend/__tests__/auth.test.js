@@ -29,16 +29,17 @@ await jest.unstable_mockModule("bcryptjs", () => ({
 }));
 
 // Mock User Model
-await jest.unstable_mockModule("../models/user.model.js", () => ({
-  default: {
-    findOne: jest.fn(),
-    // This mocks the "new User(...)" constructor behavior
-    mockImplementation: () => ({
-      _id: "mock_user_id",
-      save: jest.fn().mockResolvedValue(true),
-    }),
-  },
-}));
+await jest.unstable_mockModule("../models/user.model.js", () => {
+  const mockUser = jest.fn().mockImplementation((data) => ({
+    ...data,
+    _id: "mock_user_id",
+    save: jest.fn().mockResolvedValue(true),
+  }));
+
+  mockUser.findOne = jest.fn();
+
+  return { default: mockUser };
+});
 
 // Mock Email Handler
 await jest.unstable_mockModule("../emails/emailHandlers.js", () => ({
@@ -49,7 +50,9 @@ await jest.unstable_mockModule("../emails/emailHandlers.js", () => ({
 // 2. DYNAMIC IMPORTS
 // Now we import the controller. It will use the mocks above.
 // ==========================================
-const { signup, login } = await import("../controllers/auth.controller.js");
+const { signup, login, logout, getCurrentUser } = await import(
+  "../controllers/auth.controller.js"
+);
 const User = (await import("../models/user.model.js")).default;
 const bcrypt = (await import("bcryptjs")).default;
 
@@ -57,9 +60,9 @@ const bcrypt = (await import("bcryptjs")).default;
 // 3. THE TESTS
 // ==========================================
 describe("Auth Controller Path Coverage", () => {
-  const mockRequest = (body) => ({
+  const mockRequest = (body, user = {}) => ({
     body,
-    user: {},
+    user,
   });
 
   const mockResponse = () => {
@@ -67,6 +70,7 @@ describe("Auth Controller Path Coverage", () => {
     res.status = jest.fn().mockReturnValue(res);
     res.json = jest.fn().mockReturnValue(res);
     res.cookie = jest.fn().mockReturnValue(res);
+    res.clearCookie = jest.fn().mockReturnValue(res);
     return res;
   };
 
@@ -117,6 +121,34 @@ describe("Auth Controller Path Coverage", () => {
     });
   });
 
+  // --- LOGOUT TESTS ---
+  describe("Logout Controller", () => {
+    test("Should clear cookie and return success", () => {
+      const req = mockRequest({});
+      const res = mockResponse();
+
+      logout(req, res);
+
+      expect(res.clearCookie).toHaveBeenCalledWith("jwt-connect-campus");
+      expect(res.json).toHaveBeenCalledWith({
+        message: "Logged out successfully",
+      });
+    });
+  });
+
+  // --- GET CURRENT USER TESTS ---
+  describe("getCurrentUser", () => {
+    test("Should return the user from request", async () => {
+      const mockUser = { _id: "123", name: "Test" };
+      const req = mockRequest({}, mockUser);
+      const res = mockResponse();
+
+      await getCurrentUser(req, res);
+
+      expect(res.json).toHaveBeenCalledWith(mockUser);
+    });
+  });
+
   // --- SIGNUP TESTS ---
   describe("Signup Controller", () => {
     test("Should return 400 if fields are missing", async () => {
@@ -140,6 +172,47 @@ describe("Auth Controller Path Coverage", () => {
 
       await signup(req, res);
       expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        message: "Email already exists",
+      });
+    });
+
+    test("Should return 400 if Username exists", async () => {
+      const req = mockRequest({
+        name: "T",
+        username: "u",
+        email: "new@email.com",
+        password: "p",
+      });
+      const res = mockResponse();
+
+      User.findOne
+        .mockResolvedValueOnce(null) // Email check passes
+        .mockResolvedValueOnce({ username: "u" }); // Username check fails
+
+      await signup(req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        message: "Username already exists",
+      });
+    });
+
+    test("Should return 400 if Password is too short", async () => {
+      const req = mockRequest({
+        name: "T",
+        username: "u",
+        email: "e@e.com",
+        password: "123", // Too short
+      });
+      const res = mockResponse();
+
+      User.findOne.mockResolvedValue(null); // No conflicts
+
+      await signup(req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        message: "Password must be at least 6 characters",
+      });
     });
 
     test("Should return 201 on Success", async () => {
